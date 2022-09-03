@@ -1,0 +1,10 @@
+{
+    "name": "com.unity.spesutils",
+    "displayName": "Spes Utils",
+    "version": "0.0.1",
+    "unity": "2021.1",
+    "description": "This package provides X, Y, and Z. \n\nTo find out more, click the \"View Documentation\" link.",
+    "keywords": ["spes", "utils"],
+    "category": "Utils",
+    "dependencies": {}
+}
