@@ -6,14 +6,33 @@ public abstract class MenuBase : MonoBehaviour
 {
     #region Variables
 
+    /// <summary>
+    /// Название меню при поиске. Уникальность не гарантируется, но требуется
+    /// </summary>
     [SerializeField] public string title;
+
+    /// <summary>
+    /// Предыдущее меню, к которому можно вернуться по кнопке "Назад"
+    /// </summary>
+    [SerializeField] protected MenuBase previousMenu;
 
     #endregion
 
     #region StaticVariables
 
+    /// <summary>
+    /// Список загруженных меню, их можно открыть без создания
+    /// </summary>
     protected static List<MenuBase> loadedMenus = new List<MenuBase>();
 
+    /// <summary>
+    /// Последнее открытое меню
+    /// </summary>
+    protected static MenuBase lastOpenedMenu;
+
+    /// <summary>
+    /// Ссылка на ScriptableObject библиотеки, необходимо назначить до первого использования
+    /// </summary>
     protected static MenusLibrary menus;
 
     #endregion
@@ -80,6 +99,11 @@ public abstract class MenuBase : MonoBehaviour
         loadedMenus.Remove(menu);
     }
 
+    /// <summary>
+    /// Ищет меню в загруженных или создает новое
+    /// </summary>
+    /// <param name="title"></param>
+    /// <returns></returns>
     public static MenuBase OpenMenu(string title)
     {
         MenuBase m = GetFromLoaded(title);
@@ -91,9 +115,33 @@ public abstract class MenuBase : MonoBehaviour
                 m = Instantiate(m);
         }
 
+        m.gameObject.SetActive(true);
+
+        m.previousMenu = lastOpenedMenu;
+        lastOpenedMenu = m;
+
         return m;
     }
 
+    /// <summary>
+    /// Закрыть меню по названию. true если было закрыто
+    /// </summary>
+    /// <param name="title"></param>
+    /// <returns></returns>
+    public static bool CloseMenu(string title)
+    {
+        var m = GetFromLoaded(title);
+        if (!m)
+            return false;
+
+        m.CloseMenu();
+        return true;
+    }
+
+    /// <summary>
+    /// Ссылка на библиотеку должна быть назначена до первого использования
+    /// </summary>
+    /// <param name="lib"></param>
     public static void SetLibrary(MenusLibrary lib)
     {
         menus = lib;
@@ -103,21 +151,85 @@ public abstract class MenuBase : MonoBehaviour
 
     #region Functions
 
+    /// <summary>
+    /// Выполняет переход к окну с именем <paramref name="title"/>
+    /// </summary>
+    /// <param name="title"></param>
     public void GoToMenu(string title)
     {
         gameObject.SetActive(false);
+
         var m = OpenMenu(title);
+    }
+
+    /// <summary>
+    /// Выполняет переход к окну с именем <paramref name="title"/>
+    /// </summary>
+    /// <param name="title"></param>
+    /// <param name="bCloseCurrent"></param>
+    public void GoToMenu(string title, bool bCloseCurrent)
+    {
+        if (bCloseCurrent)
+            gameObject.SetActive(false);
+
+        var m = OpenMenu(title);
+    }
+
+    /// <summary>
+    /// Возврат к предыдущему созданному меню без проверок
+    /// </summary>
+    public void ToPreviousMenu()
+    {
+        gameObject.SetActive(false);
+
+        var m = GetFromLoaded(title);
         m.gameObject.SetActive(true);
     }
+
+    /// <summary>
+    /// Скрывает меню
+    /// </summary>
+    public void HideMenu()
+    {
+        gameObject.SetActive(false);
+    }
+
+    /// <summary>
+    /// Скрывает меню и удаляет из загруженных
+    /// </summary>
+    public void CloseMenu()
+    {
+        OnClose();
+        Destroy(gameObject);
+    }
+
     public virtual void Reset()
     {
+
+    }
+
+    /// <summary>
+    /// Позволяет передать данные для инициализации
+    /// </summary>
+    /// <param name="param"></param>
+    public virtual void Initialize(string param = "")
+    {
+
+    }
+
+    /// <summary>
+    /// Вызывается при окончательном закрытии окна, для добавления логики при показе/скрытии окна использовать OnEnable и OnDisable
+    /// </summary>
+    protected virtual void OnClose()
+    {
+
     }
 
     #endregion
 
     #region UnityCallbacks
 
-    public void Awake()
+    public virtual void Awake()
     {
         if (!FindInLoadedMenus(title))
             AddToLoadedMenus(this);
@@ -126,6 +238,7 @@ public abstract class MenuBase : MonoBehaviour
     public void OnDestroy()
     {
         TryRemoveFromLoaded(this);
+        OnClose();
     }
 
     #endregion
