@@ -233,6 +233,14 @@ public abstract class MenuBase : MonoBehaviour
     {
         if (!FindInLoadedMenus(title))
             AddToLoadedMenus(this);
+
+        foreach (var m in loadedMenus)
+        {
+            if (m != this)
+            {
+                CloseMenu(m.title);
+            }
+        }
     }
 
     public void OnDestroy()
